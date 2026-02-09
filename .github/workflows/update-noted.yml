@@ -1,0 +1,39 @@
+name: Update Noted Formula
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (without v prefix)"
+        required: true
+      sha_linux:
+        description: "SHA256 for Linux x86_64"
+        required: true
+      sha_macos_x86:
+        description: "SHA256 for macOS x86_64"
+        required: true
+      sha_macos_arm:
+        description: "SHA256 for macOS ARM64"
+        required: true
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update formula
+        env:
+          VERSION: ${{ inputs.version }}
+          SHA_LINUX: ${{ inputs.sha_linux }}
+          SHA_MACOS_X86: ${{ inputs.sha_macos_x86 }}
+          SHA_MACOS_ARM: ${{ inputs.sha_macos_arm }}
+        run: envsubst < Formula/noted.template.rb > Formula/noted.rb
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/noted.rb
+          git commit -m "Update noted to v${{ inputs.version }}"
+          git push
